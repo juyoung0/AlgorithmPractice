@@ -36,3 +36,11 @@ def solution(key, lock):
         locks = np.rot90(locks)
 
     return answer
+
+# Numpy 없이 행렬 회전하기
+    # krots = [
+    #     key,                                                                        # 0도, 기본
+    #     list(zip(*reversed(key))),                                                  #90도, 회전
+    #     list(map(lambda e:list(reversed(e)), reversed(key))),                       #180도, 회전
+    #     list(map(lambda e:list(reversed(e)), reversed(list(zip(*reversed(key)))))), #270도, 회전
+    # ]
