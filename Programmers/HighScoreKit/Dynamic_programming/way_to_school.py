@@ -1,3 +1,6 @@
+# 210829 : 30분 소요
+# 최단 경로 갯수 세는 것이 아닌, 최단 경로 세는 것인 줄 알고 초반에 코드 잘못 짬
+
 def solution(m, n, puddles):
     answer = 0
     route = [[0] * (m + 1) for i in range(n + 1)]
