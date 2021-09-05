@@ -1,3 +1,5 @@
+# 210905: 1시간 30분 소요
+
 def solution(n, build_frame):
     answer = []
     frame = [[[0, 0] for _ in range(n + 1)] for _ in range(n + 1)]  # 기둥, 보 순서
