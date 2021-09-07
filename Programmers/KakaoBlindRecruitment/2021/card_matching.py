@@ -1,8 +1,13 @@
-# 2100907: 순열조합으로 모든 카드 순서대로 보도록 했는데 정답율이 더 낮아짐...^^;
+# 2100907: 순열조합으로 모든 카드 순서대로 보도록 변경. 공간 탐색하는 부분 다익스트라로 변경
+# 삽질 결과 느낀 점 1. 전역변수 사용 시에는 TC 여러개 돌릴 때 주의 하라. (프로그래머스 답과 달라서 오해할 수 있다)
+# 느낀 점 2. 경로 탐색 등에서 map 을 재활용 할 때 초기값으로 셋팅하는 걸 주의하라
+# 얕은 복사가 되면, 이미 기존 값이 다 날라가 버려서 다음 번 경로 계산시 틀린 값이 나온다
+# copy 라이브러리의 deapcopy() 를 활용하라
 
 import itertools
 from collections import deque
 from collections import defaultdict
+import copy
 
 N = 4
 board = [[]]
@@ -64,48 +69,44 @@ def find_closer(r, c):
 
     return closer
 
-def find_way(r, c, g_r, g_c):
+def find_way(_r, _c):
     global visited
+    pq = deque()
+    pq.append((_r, _c))
+    visited[_r][_c] = 0
 
-    if r == g_r and c == g_c:
-        return 0
+    while len(pq) != 0:
+        r, c = pq[0][0], pq[0][1]
+        pq.popleft()
 
-    #print("visited ", r, c, step)
-    for i in range(4):
-        # ctrl 썼을 때
-        ctrl_move = ctrl(r, c, i)
-        if ctrl_move:
-            n_r, n_c = ctrl_move[0], ctrl_move[1]
-            if n_r == g_r and n_c == g_c:
-                visited[g_r][g_c] = min(visited[g_r][g_c], visited[r][c])
-                return
-            if visited[n_r][n_c] > visited[r][c] + 1:
-                visited[n_r][n_c] = visited[r][c] + 1
-                find_way(n_r, n_c, g_r, g_c)
+        for i in range(4):
+            # ctrl 썼을 때 갈 수 있는 길
+            ctrl_move = ctrl(r, c, i)
+            if ctrl_move:
+                n_r, n_c = ctrl_move[0], ctrl_move[1]
+                # 한 칸 갈수있는 거리면 넣지 않는다 (아래에서 넣을 것이기 때문)
+                if n_r - r != 1 and n_c - c != 1:
+                    if visited[n_r][n_c] > visited[r][c] + 1:
+                        pq.append((n_r, n_c))
+                        visited[n_r][n_c] = visited[r][c] + 1
 
-        # 한 칸 이동했을 때
-        n_r, n_c = r + dir[i][0], c + dir[i][1]
-        if 0 <= n_r < N and 0 <= n_c < N:
-            if n_r == g_r and n_c == g_c:
-                visited[g_r][g_c] = min(visited[g_r][g_c], visited[r][c] )
-                return
-            if visited[n_r][n_c] > visited[r][c] + 1:
-                visited[n_r][n_c] = visited[r][c] + 1
-                find_way(n_r, n_c, g_r, g_c)
-
+            # 한 칸 이동했을 때로 갈 수 있는 길
+            n_r, n_c = r + dir[i][0], c + dir[i][1]
+            if 0 <= n_r < N and 0 <= n_c < N:
+                if visited[n_r][n_c] > visited[r][c] + 1:
+                    pq.append((n_r, n_c))
+                    visited[n_r][n_c] = visited[r][c] + 1
     return
 
-def solution(_board, r, c):
+def solution(_board, _r, _c):
     global board, visited
-    board = _board
     answer = 1000
     card_cnt = 0
     for i in range(N):
         for j in range(N):
-            if board[i][j] != 0:
+            if _board[i][j] != 0:
                 card_cnt += 1
-                shape[board[i][j]].append((i, j))
-
+                shape[_board[i][j]].append((i, j))
     # 어느 카드쌍을 먼저 지울지 고려할 때 활용
     for s in shape.keys():
         dist[s] = abs(shape[s][0][0]-shape[s][1][0]) + abs(shape[s][0][1]-shape[s][1][1])
@@ -122,8 +123,9 @@ def solution(_board, r, c):
         open = None
         step = 0
         cnt = card_cnt
+        r, c = _r, _c
+        board = copy.deepcopy(_board)
         for card in order:
-            #while cnt > 0:
             # 현재 위치에서 뒤집을 카드로 가는 거리 구하기
             if card < 0:
                 card = abs(card)
@@ -131,29 +133,34 @@ def solution(_board, r, c):
             else:
                 next_r, next_c = shape[card][0][0], shape[card][0][1]
 
-            visited = [[200 for _ in range(N)] for _ in range(N)]
-            visited[r][c] = 1
-            find_way(r, c, next_r, next_c)
-            step += visited[next_r][next_c]
-            step += 1 # 카드 오픈
+            # 짝이 안 맞을 경우 다른 순열로 넘어감
+            if open != None and open != card:
+                break
 
+            visited = [[200 for _ in range(N)] for _ in range(N)]
+            if r != next_r or c != next_c:
+                find_way(r, c)
+                step += visited[next_r][next_c]
+
+            # 처음 뒤집는 카드
             if open == None:
                 open = card
+                step += 1  # 카드 오픈
             elif open == card:
-                # 짝이 맞는 카드 찾음
-                if open == card:
-                    board[r][c] = 0
-                    board[next_r][next_c] = 0
-                    cnt -= 2
-                    #print("find : ", (r, c), (next_r, next_c), visited[r][c])
+                board[r][c] = 0
+                board[next_r][next_c] = 0
                 open = None
+                step += 1  # 카드 오픈
+                cnt -= 2
+
             r, c = next_r, next_c
+
         if cnt == 0:
             if answer > step:
-                #answer_list = order
-                answer = step
+                answer_list = order
+                answer = min(answer, step)
 
-    return step
+    return answer
 
 print(solution([[1, 0, 0, 3], [2, 0, 0, 0], [0, 0, 0, 2], [3, 0, 1, 0]], 1, 0), 14)
 print(solution([[3, 0, 0, 2], [0, 0, 1, 0], [0, 1, 0, 0], [2, 0, 0, 3]], 0, 1), 16)
