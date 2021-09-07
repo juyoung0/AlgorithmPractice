@@ -2,7 +2,8 @@
 # 삽질 결과 느낀 점 1. 전역변수 사용 시에는 TC 여러개 돌릴 때 주의 하라. (프로그래머스 답과 달라서 오해할 수 있다)
 # 느낀 점 2. 경로 탐색 등에서 map 을 재활용 할 때 초기값으로 셋팅하는 걸 주의하라
 # 얕은 복사가 되면, 이미 기존 값이 다 날라가 버려서 다음 번 경로 계산시 틀린 값이 나온다
-# copy 라이브러리의 deapcopy() 를 활용하라
+# copy 라이브러리의 deapcopy() 를 활용하라 => 시간 초과 날 수도 있으니 대안을 생각하라
+# permutation 때문에 시간초과가 나는 것으로 보임 => 개선 필요!
 
 import itertools
 from collections import deque
@@ -100,13 +101,14 @@ def find_way(_r, _c):
 
 def solution(_board, _r, _c):
     global board, visited
+    board = _board
     answer = 1000
     card_cnt = 0
     for i in range(N):
         for j in range(N):
-            if _board[i][j] != 0:
+            if board[i][j] != 0:
                 card_cnt += 1
-                shape[_board[i][j]].append((i, j))
+                shape[board[i][j]].append((i, j))
     # 어느 카드쌍을 먼저 지울지 고려할 때 활용
     for s in shape.keys():
         dist[s] = abs(shape[s][0][0]-shape[s][1][0]) + abs(shape[s][0][1]-shape[s][1][1])
@@ -124,7 +126,11 @@ def solution(_board, _r, _c):
         step = 0
         cnt = card_cnt
         r, c = _r, _c
-        board = copy.deepcopy(_board)
+        # 초기화 된 보드 새로 셋팅하기
+        for key in shape.keys():
+            for i in shape[key]:
+                board[i[0]][i[1]] = key
+        #board = copy.deepcopy(_board)
         for card in order:
             # 현재 위치에서 뒤집을 카드로 가는 거리 구하기
             if card < 0:
@@ -162,5 +168,5 @@ def solution(_board, _r, _c):
 
     return answer
 
-print(solution([[1, 0, 0, 3], [2, 0, 0, 0], [0, 0, 0, 2], [3, 0, 1, 0]], 1, 0), 14)
+#print(solution([[1, 0, 0, 3], [2, 0, 0, 0], [0, 0, 0, 2], [3, 0, 1, 0]], 1, 0), 14)
 print(solution([[3, 0, 0, 2], [0, 0, 1, 0], [0, 1, 0, 0], [2, 0, 0, 3]], 0, 1), 16)
