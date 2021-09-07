@@ -16,7 +16,7 @@ def solution(n, weak, dist):
     gap.append([weak[0] + n - weak[-1], weak[-1], weak[0]])
     # next_w((weak[-1], weak[0])
     dist.sort()
-    #print(gap)
+    print(gap)
     # weak 사이의 간격이 가장 먼 weak 두 지점중 뒤 쪽 지점에서 시계 방향으로 회전한다
     # 가장 많이 움직일 수 있는 사람부터 움직인다
     while check < len(weak):
@@ -36,31 +36,38 @@ def solution(n, weak, dist):
         gap[curr_w][0] += gap[next_w][0]
         gap[curr_w][2] = gap[next_w][2]
         prev_w = curr_w
-        del_list.append(next_w)
+        #del_list.append(next_w)
+        del gap[next_w]
+        next_w = 0 if curr_w == len(gap) - 1 else curr_w + 1
+
         check += 1
 
         if gap[curr_w][1] == gap[curr_w][2]:
             break
-        #print("curr_w : ", gap[curr_w], "walk : ", walk, " next_w : ", gap[next_w])
+        print("prev_w : ", prev_w, "curr_w : ",  gap[curr_w], "walk : ", walk, " next_w : ", gap[next_w])
+        c = 0
         while gap[next_w][2] <= walk:
+            c += 1
+            if c == 10:
+                break
             curr_w = next_w
             next_w = 0 if curr_w == len(gap) - 1 else curr_w + 1
             gap[prev_w][0] += gap[next_w][0]
             gap[prev_w][2] = gap[next_w][2]
-            del_list.append(next_w)
-            check += 1
-            #print("walk : ", walk, " checker : ", checker, "prev_w : ", gap[prev_w], "curr_w : ", gap[curr_w], " next_w : ", gap[next_w] )
+            #del_list.append(next_w)
+            del gap[next_w]
+            next_w = 0 if curr_w == len(gap) - 1 else curr_w + 1
 
-        #print(gap)
-        #print(del_list)
-        del gap[del_list[0]:del_list[-1]+1]
-        #print(gap)
-        #print("=====")
+            check += 1
+            print("walk : ", walk, " checker : ", checker, "prev_w : ", gap[prev_w], "curr_w : ", gap[curr_w], " next_w : ", gap[next_w] )
+
+        print(gap)
+        print("=====")
         # if len(gap) >= 1:
         #     answer += 1
         # else:
         #     return 0
     return answer
 
-print(solution(12, [1, 5, 6, 10], [1, 2, 3, 4]), 2)
+#print(solution(12, [1, 5, 6, 10], [1, 2, 3, 4]), 2)
 print(solution(12, [1, 3, 4, 9, 10], [3, 5, 7]), 1)
