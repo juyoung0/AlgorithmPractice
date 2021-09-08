@@ -3,7 +3,7 @@
 # 느낀 점 2. 경로 탐색 등에서 map 을 재활용 할 때 초기값으로 셋팅하는 걸 주의하라
 # 얕은 복사가 되면, 이미 기존 값이 다 날라가 버려서 다음 번 경로 계산시 틀린 값이 나온다
 # copy 라이브러리의 deapcopy() 를 활용하라 => 시간 초과 날 수도 있으니 대안을 생각하라
-# permutation 때문에 시간초과가 나는 것으로 보임 => 개선 필요!
+# 210908: permutation 때문에 시간초과가 나서 부호, 카드 모양 따로 돌렸더니 76점
 
 import itertools
 from collections import deque
@@ -115,56 +115,75 @@ def solution(_board, _r, _c):
 
     # 어떤 그림부터 뒤집을지 순열 만들기 (각 카드 두 쌍도 순서를 다르게 넣는다)
     # - 붙은 건 두번째 카드를 의미한다
-    all_key = []
-    for key in shape.keys():
-        all_key.append(key)
-        all_key.append(-key)
-    card_order = itertools.permutations(all_key)
+    # all_key = []
+    # for key in shape.keys():
+    #     all_key.append(key)
+    #     all_key.append(-key)
 
+    # 순서 순열 만듬
+    plus_minus = []
+    one = [1] * len(shape.keys())
+    plus_minus.append(tuple(one))
+    for i in range(len(shape.keys())-1):
+        one[i] = -1
+        pm = itertools.permutations(one)
+        for p in pm:
+            plus_minus.append(p)
+    one[len(shape.keys())-1] = -1
+    plus_minus.append(tuple(one))
+    card_order = itertools.permutations(shape.keys())
+    plus_minus = list(set(plus_minus))
     for order in card_order:
         open = None
-        step = 0
-        cnt = card_cnt
-        r, c = _r, _c
-        # 초기화 된 보드 새로 셋팅하기
-        for key in shape.keys():
-            for i in shape[key]:
-                board[i[0]][i[1]] = key
         #board = copy.deepcopy(_board)
-        for card in order:
-            # 현재 위치에서 뒤집을 카드로 가는 거리 구하기
-            if card < 0:
-                card = abs(card)
-                next_r, next_c = shape[card][1][0], shape[card][1][1]
-            else:
-                next_r, next_c = shape[card][0][0], shape[card][0][1]
+        for pm in plus_minus:
+            step = 0
+            cnt = card_cnt
+            r, c = _r, _c
+            # 초기화 된 보드 새로 셋팅하기
+            for key in shape.keys():
+                for i in shape[key]:
+                    board[i[0]][i[1]] = key
+            for i, card in enumerate(order):
+                for j in range(2):
+                    # 현재 위치에서 뒤집을 카드로 가는 거리 구하기
+                    # plus_minus 부호가 -1 이면 두번째 카드부터 진행한다
+                    if pm[i] < 0:
+                        if j == 0:
+                            next_r, next_c = shape[card][1][0], shape[card][1][1]
+                        else:
+                            next_r, next_c = shape[card][0][0], shape[card][0][1]
+                    else:
+                        if j == 0:
+                            next_r, next_c = shape[card][0][0], shape[card][0][1]
+                        else:
+                            next_r, next_c = shape[card][1][0], shape[card][1][1]
 
-            # 짝이 안 맞을 경우 다른 순열로 넘어감
-            if open != None and open != card:
-                break
+                    # 짝이 안 맞을 경우 다른 순열로 넘어감
+                    # if open != None and open != card:
+                    #     break
 
-            visited = [[200 for _ in range(N)] for _ in range(N)]
-            if r != next_r or c != next_c:
-                find_way(r, c)
-                step += visited[next_r][next_c]
+                    visited = [[200 for _ in range(N)] for _ in range(N)]
+                    if r != next_r or c != next_c:
+                        find_way(r, c)
+                        step += visited[next_r][next_c]
 
-            # 처음 뒤집는 카드
-            if open == None:
-                open = card
-                step += 1  # 카드 오픈
-            elif open == card:
-                board[r][c] = 0
-                board[next_r][next_c] = 0
-                open = None
-                step += 1  # 카드 오픈
-                cnt -= 2
+                    # 처음 뒤집는 카드
+                    if open == None:
+                        open = card
+                        step += 1  # 카드 오픈
+                    elif open == card:
+                        board[r][c] = 0
+                        board[next_r][next_c] = 0
+                        open = None
+                        step += 1  # 카드 오픈
+                        cnt -= 2
 
-            r, c = next_r, next_c
+                    r, c = next_r, next_c
 
-        if cnt == 0:
-            if answer > step:
-                answer_list = order
-                answer = min(answer, step)
+            if cnt == 0:
+                if answer > step:
+                    answer = min(answer, step)
 
     return answer
 
