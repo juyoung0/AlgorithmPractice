@@ -1,17 +1,23 @@
+
 import sys
+from itertools import permutations
 
-n, m, k = map(int, input().split())
+n, M, k = map(int, input().split())
 rail = list(map(int, input().split()))
-rail.sort()
-rail_sort = []
-for i in range(n//2):
-    if n % 2 == 0:
-        rail_sort.append(rail[i + n//2])
-    else:
-        rail_sort.append(rail[i + n//2 + 1])
-    rail_sort.append(i)
+rails = permutations(rail, len(rail))
 
-if n % 2 == 1:
-    rail_sort.append(rail[n//2])
+answer = 50*50
+for r in rails:
+    i, m, total = 0, 0, 0
+    for _ in range(k):
+        while m + r[i] <= M:
+            m += r[i]
+            i += 1
+            i %= n
+        total += m
+        m = 0
+        if total >= answer:
+            break
+    answer = min(total, answer)
 
-print(rail_sort)
+print(answer)
